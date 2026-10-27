@@ -12,6 +12,12 @@ export interface Uso {
 
 export const getDb = (): DatabaseSync => db
 
+export const rutaDb = (): string => join(app.getPath('userData'), 'vetgest.db')
+
+export function cerrarDb(): void {
+  if (db) db.close()
+}
+
 export function transaccion<T>(fn: () => T): T {
   db.exec('BEGIN')
   try {
@@ -106,7 +112,7 @@ export function registrarMovimiento(m: {
 }
 
 export function initDb(): void {
-  db = new DatabaseSync(join(app.getPath('userData'), 'vetgest.db'))
+  db = new DatabaseSync(rutaDb())
   db.exec('PRAGMA journal_mode = WAL')
   db.exec('PRAGMA foreign_keys = ON')
   db.exec(`

@@ -4,6 +4,20 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initDb, registerIpc } from './db'
 import { registerClinica } from './clinica'
+import { registerLicencia, evaluar } from './licencia'
+import { registerRespaldo } from './respaldo'
+
+app.setPath('userData', join(app.getPath('appData'), 'vetgest'))
+
+let iniciada = false
+function iniciarModulos(): void {
+  if (iniciada) return
+  iniciada = true
+  initDb()
+  registerIpc()
+  registerClinica()
+  registerRespaldo()
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -40,12 +54,13 @@ function createWindow(): void {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
-  initDb()
-  registerIpc()
-  registerClinica()
+app.whenReady().then(async () => {
+  registerLicencia(iniciarModulos)
+  try {
+    if ((await evaluar()).activada) iniciarModulos()
+  } catch (err) {
+    console.error('No se pudo verificar la licencia', err)
+  }
   
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

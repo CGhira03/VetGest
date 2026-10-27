@@ -1,6 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 const api = {
+  estadoLicencia: () => ipcRenderer.invoke('licencia:estado'),
+  activarLicencia: () => ipcRenderer.invoke('licencia:activar'),
+  estadoCopias: () => ipcRenderer.invoke('copias:estado'),
+  exportarCopia: () => ipcRenderer.invoke('copias:exportar'),
+  elegirRestauracion: () => ipcRenderer.invoke('copias:elegir-restauracion'),
+  restaurarCopia: (ruta: string) => ipcRenderer.invoke('copias:restaurar', ruta),
+
   listarPacientes: (q: string) => ipcRenderer.invoke('pacientes:listar', q),
   crearPaciente: (d: unknown) => ipcRenderer.invoke('pacientes:crear', d),
   editarPaciente: (d: unknown) => ipcRenderer.invoke('pacientes:editar', d),

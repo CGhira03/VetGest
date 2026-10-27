@@ -176,3 +176,13 @@ button.peligro:hover { background: #8e1f2b; }
 .peligro-caja { background: #fdecea; border: 1px solid #e57368; border-radius: 4px; padding: 10px 14px; margin-bottom: 12px; }
 .peligro-caja p { margin: 6px 0; }
 .peligro-caja ul { margin: 6px 0; padding-left: 20px; }
+
+.lic-nombre { margin-left: auto; color: #c9d4ea; font-size: 12px; }
+.banner-copia { background: #fff4e0; border-bottom: 1px solid #f0b34a; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+.activacion { height: 100vh; display: flex; align-items: center; justify-content: center; background: #1f3864; padding: 16px; }
+.activacion-caja { background: #fff; border-radius: 8px; padding: 28px; width: 100%; max-width: 560px; }
+.pasos { padding-left: 20px; line-height: 1.7; }
+.pasos li { margin-bottom: 8px; }
+.id-maquina { font-family: Consolas, monospace; font-size: 20px; font-weight: bold; background: #eef2fa; padding: 10px; border-radius: 4px; margin: 6px 0; letter-spacing: 1px; text-align: center; user-select: all; }
+.id-chico { font-family: Consolas, monospace; user-select: all; }

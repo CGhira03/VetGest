@@ -150,3 +150,17 @@ export const kg = (n: number): string =>
 
 export const plural = (n: number, singular: string, pl: string): string =>
   `${n} ${n === 1 ? singular : pl}`
+
+export interface EstadoLicencia {
+  activada: boolean
+  modo: 'dev' | 'licencia' | 'pendiente' | 'invalida'
+  idMaquina: string
+  licenciatario?: string
+  emitida?: string
+  motivo?: string
+  version: string
+  carpetaDatos: string
+}
+
+export const diasDesde = (iso: string): number =>
+  Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
