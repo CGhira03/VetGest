@@ -22,8 +22,10 @@ function iniciarModulos(): void {
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1280,
+    height: 800,
+    minWidth: 1000,
+    minHeight: 650,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -55,6 +57,7 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
+  electronApp.setAppUserModelId('com.vetgest.app')
   registerLicencia(iniciarModulos)
   try {
     if ((await evaluar()).activada) iniciarModulos()

@@ -1,0 +1,7 @@
+VETGEST - CONTRATO DE LICENCIA DE USO (TEXTO PROVISORIO)
+
+Este texto es solo para probar el instalador.
+El contrato de licencia y los terminos y condiciones definitivos
+reemplazan este archivo antes de entregar la aplicacion a un cliente.
+
+Al instalar la aplicacion, el usuario acepta los terminos del contrato.
