@@ -1,8 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { Campo, Modal } from '../components/ui'
+import { useEffect, useState } from 'react'
 import ConsultaModal from '../components/ConsultaModal'
+import EliminarModal from '../components/EliminarModal'
+import PacienteModal from '../components/PacienteModal'
 import { Miniatura, VisorImagen } from '../components/Imagenes'
 import {
+  edadTexto,
   fechaHora,
   fechaLarga,
   kg,
@@ -14,9 +16,9 @@ import {
   type Paciente,
   type Producto
 } from '../utils'
-import EliminarModal from '../components/EliminarModal'
 
 type Modales = null | 'nuevoPaciente' | 'editarPaciente' | 'nuevaConsulta' | 'eliminarPaciente'
+
 export default function Pacientes() {
   const [q, setQ] = useState('')
   const [pacientes, setPacientes] = useState<Paciente[]>([])
@@ -103,7 +105,7 @@ export default function Pacientes() {
       await window.api.agregarImagenes({ pacienteId: sel.id, rutas: elegidas.map((e) => e.ruta) })
       await cargarFicha(sel)
       setError('')
-      mostrarAviso(`${plural(elegidas.length, 'imagen agregada', 'imágenes agregadas')}`)
+      mostrarAviso(plural(elegidas.length, 'imagen agregada', 'imágenes agregadas'))
     } catch (err) {
       setError(msgError(err))
     }
@@ -126,7 +128,7 @@ export default function Pacientes() {
     }
   }
 
-    async function eliminarConsulta(c: Consulta) {
+  async function eliminarConsulta(c: Consulta) {
     if (!sel) return
     const detalle: string[] = []
     if (c.productos.length > 0) {
@@ -166,7 +168,7 @@ export default function Pacientes() {
     setProductos(await window.api.listarProductos())
     mostrarAviso('Paciente eliminado')
   }
-  
+
   const t = filtro.trim().toLowerCase()
   const visibles = !t
     ? consultas
@@ -201,7 +203,9 @@ export default function Pacientes() {
               </small>
               <small className="sub">
                 {p.propietario}
-                {p.ultima_consulta ? ` · última visita ${new Date(p.ultima_consulta).toLocaleDateString('es-AR')}` : ''}
+                {p.ultima_consulta
+                  ? ` · última visita ${new Date(p.ultima_consulta).toLocaleDateString('es-AR')}`
+                  : ''}
               </small>
             </li>
           ))}
@@ -221,14 +225,7 @@ export default function Pacientes() {
           <>
             <div className="ficha-pac">
               <div className="cabecera">
-                <div>
-                  <h1>{sel.nombre}</h1>
-                  <div className="detalle">
-                    {sel.especie}
-                    {sel.raza ? ` · ${sel.raza}` : ''} — Dueño: {sel.propietario}
-                    {sel.telefono ? ` (${sel.telefono})` : ''}
-                  </div>
-                </div>
+                <h1>{sel.nombre}</h1>
                 <div className="acciones">
                   <button onClick={() => setModal('nuevaConsulta')}>+ Nueva consulta</button>
                   <button className="gris" onClick={() => setModal('editarPaciente')}>
@@ -239,6 +236,20 @@ export default function Pacientes() {
                   </button>
                 </div>
               </div>
+
+              <div className="ficha-datos">
+                <div><span>Dueño</span><b>{sel.propietario}</b></div>
+                <div><span>Teléfono</span><b>{sel.telefono || '—'}</b></div>
+                <div><span>Dirección</span><b>{sel.direccion || '—'}</b></div>
+                <div>
+                  <span>Especie y raza</span>
+                  <b>{sel.especie}{sel.raza ? ` · ${sel.raza}` : ''}</b>
+                </div>
+                <div><span>Sexo</span><b>{sel.sexo || '—'}</b></div>
+                <div><span>Edad</span><b>{edadTexto(sel.nacimiento)}</b></div>
+                <div><span>Alimentación</span><b>{sel.alimentacion || '—'}</b></div>
+              </div>
+
               <div className="stats">
                 <div className="stat">
                   <span>Consultas</span>
@@ -316,7 +327,7 @@ export default function Pacientes() {
                           >
                             Editar
                           </button>
-                           <button
+                          <button
                             className="chico peligro"
                             onClick={(e) => {
                               e.stopPropagation()
@@ -465,7 +476,7 @@ export default function Pacientes() {
               vuelve a su lugar)
             </li>
             <li>{plural(imagenes.length, 'imagen', 'imágenes')}</li>
-            <li>Los datos del dueño ({sel.propietario}), si no tiene otras mascotas</li>
+            <li>El dueño ({sel.propietario}) se conserva si tiene otras mascotas</li>
           </ul>
           <p>
             <b>No se puede deshacer.</b>
@@ -474,79 +485,5 @@ export default function Pacientes() {
       )}
       {visor && <VisorImagen id={visor.id} nombre={visor.nombre} onClose={() => setVisor(null)} />}
     </div>
-  )
-}
-
-function PacienteModal({
-  paciente,
-  onClose,
-  onGuardado
-}: {
-  paciente?: Paciente
-  onClose: () => void
-  onGuardado: (id: number) => void
-}) {
-  const [f, setF] = useState({
-    propietario: paciente?.propietario ?? '',
-    telefono: paciente?.telefono ?? '',
-    nombre: paciente?.nombre ?? '',
-    especie: paciente?.especie ?? 'Perro',
-    raza: paciente?.raza ?? ''
-  })
-  const [error, setError] = useState('')
-
-  async function guardar(e: FormEvent) {
-    e.preventDefault()
-    try {
-      if (paciente) {
-        await window.api.editarPaciente({ id: paciente.id, ...f })
-        onGuardado(paciente.id)
-      } else {
-        const id: number = await window.api.crearPaciente(f)
-        onGuardado(id)
-      }
-    } catch (err) {
-      setError(msgError(err))
-    }
-  }
-
-  return (
-    <Modal titulo={paciente ? 'Editar paciente y dueño' : 'Nuevo paciente'} onClose={onClose}>
-      <form onSubmit={guardar}>
-        <div className="sec-titulo">Dueño</div>
-        <div className="grid2">
-          <Campo label="Nombre del dueño">
-            <input required autoFocus value={f.propietario}
-              onChange={(e) => setF({ ...f, propietario: e.target.value })} />
-          </Campo>
-          <Campo label="Teléfono">
-            <input value={f.telefono} onChange={(e) => setF({ ...f, telefono: e.target.value })} />
-          </Campo>
-        </div>
-        <div className="sec-titulo">Mascota</div>
-        <div className="grid2">
-          <Campo label="Nombre de la mascota">
-            <input required value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} />
-          </Campo>
-          <Campo label="Especie">
-            <select value={f.especie} onChange={(e) => setF({ ...f, especie: e.target.value })}>
-              <option>Perro</option>
-              <option>Gato</option>
-              <option>Otro</option>
-            </select>
-          </Campo>
-        </div>
-        <Campo label="Raza">
-          <input value={f.raza} onChange={(e) => setF({ ...f, raza: e.target.value })} />
-        </Campo>
-        {error && <div className="error">{error}</div>}
-        <div className="pie-modal">
-          <button type="button" className="gris" onClick={onClose}>
-            Cancelar
-          </button>
-          <button>{paciente ? 'Guardar cambios' : 'Crear paciente'}</button>
-        </div>
-      </form>
-    </Modal>
   )
 }

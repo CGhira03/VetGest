@@ -1,5 +1,6 @@
 appId: com.vetgest.app
-productName: VetGest
+productName: VeteMascota
+copyright: Copyright © 2026 [Nombre del licenciante]
 directories:
   buildResources: build
 files:
@@ -13,14 +14,22 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
 win:
-  executableName: VetGest
+  executableName: VeteMascota
+  icon: build/icon.png
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   perMachine: false
   deleteAppDataOnUninstall: false
-  license: build/terminos.txt
+  license: build/terminos.rtf
   artifactName: ${productName}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}

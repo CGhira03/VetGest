@@ -1,0 +1,105 @@
+Estos términos regulan el uso de la aplicación VeteMascota. Se aceptan al instalarla, al cargar el archivo de licencia o al firmar el contrato de licencia, lo que ocurra primero. Quien no esté de acuerdo no debe instalar ni usar la aplicación.
+1. Partes y definiciones
+1.1. LICENCIANTE: [C. M. Ghirardotti - CMG-TECH], correo electrónico [cghirardotti9@gmail.com].
+1.2. LICENCIATARIO: la persona humana o jurídica titular de la veterinaria o establecimiento, identificada en el Contrato de licencia y en el Archivo de licencia.
+1.3. Definiciones:
+• Aplicación: el programa de escritorio para Windows llamado VeteMascota, en la versión entregada. Incluye historia clínica de pacientes y dueños, consultas con imágenes, control de stock con sus movimientos, proveedores, ventas, cuentas corrientes de clientes, libro de ingresos y egresos, exportación a PDF y Excel, copias de seguridad y licencia.
+• Contrato de licencia: documento con las condiciones particulares de cada cliente (precio, forma de pago, servicios contratados y computadora autorizada). Estos términos forman parte de él.
+• ID de máquina: identificador que la Aplicación genera a partir de la computadora donde se instala.
+• Archivo de licencia: archivo con extensión .vetlic emitido por el LICENCIANTE para un ID de máquina determinado.
+• Datos: toda la información que el LICENCIATARIO carga en la Aplicación (pacientes, dueños, historias clínicas, imágenes, productos, proveedores, ventas, clientes, cobros y demás).
+• Fecha de entrega: la fecha del Acta de conformidad o, si no se firma, la que fija la cláusula 5.3.
+• Período de garantía: los 30 (treinta) días corridos posteriores a la Fecha de entrega.
+2. Licencia de uso
+2.1. El LICENCIANTE otorga al LICENCIATARIO una licencia de uso de la Aplicación, no exclusiva, intransferible, por tiempo indeterminado y a cambio de un pago único.
+2.2. La licencia es válida para una (1) sola computadora, identificada por su ID de máquina, y para uso del personal del LICENCIATARIO en su actividad. No autoriza la instalación ni el uso en otras computadoras.
+2.3. La licencia es un derecho de uso. No transfiere la propiedad de la Aplicación ni de su código fuente.
+2.4. La licencia comprende la versión entregada y las correcciones que se entreguen durante el Período de garantía. Las versiones posteriores con funciones nuevas pueden tener un precio aparte.
+3. Activación y verificación
+3.1. Al instalarse, la Aplicación queda bloqueada hasta que se cargue un Archivo de licencia válido.
+3.2. Para obtenerlo, el LICENCIATARIO informa al LICENCIANTE el ID de máquina que muestra la Aplicación, y el LICENCIANTE emite el Archivo de licencia para ese ID.
+3.3. La Aplicación verifica la licencia cada vez que se abre, sin conexión a internet y sin enviar información al LICENCIANTE.
+3.4. El LICENCIATARIO debe guardar una copia del Archivo de licencia junto con sus copias de seguridad. Reinstalar la Aplicación en la misma computadora no requiere una licencia nueva: alcanza con volver a cargar el mismo archivo.
+3.5. Si la licencia deja de ser válida en la computadora (por ejemplo, porque cambió el ID de máquina), la Aplicación se bloquea, pero los Datos no se borran: siguen en la computadora y vuelven a estar disponibles al cargar una licencia válida.
+4. Restricciones y propiedad intelectual
+4.1. La Aplicación, su código fuente, su nombre, su logotipo y su documentación son propiedad exclusiva del LICENCIANTE y están protegidos por la Ley 11.723 de Propiedad Intelectual y demás normas aplicables.
+4.2. Sin autorización previa y por escrito del LICENCIANTE, el LICENCIATARIO no puede:
+• copiar o distribuir la Aplicación o el Archivo de licencia (salvo la copia del archivo de licencia dentro de sus copias de seguridad);
+• instalar o usar la Aplicación en más de una computadora;
+• modificar, adaptar, traducir o crear obras derivadas de la Aplicación;
+• descompilar, desensamblar, aplicar ingeniería inversa o intentar evadir el sistema de licencia;
+• vender, alquilar, sublicenciar, ceder o transferir la Aplicación o la licencia a terceros.
+4.3. El incumplimiento de esta cláusula faculta al LICENCIANTE a revocar la licencia (cláusula 13) y a reclamar los daños que correspondan.
+4.4. El LICENCIATARIO no puede quitar ni alterar los avisos de propiedad, el nombre ni el logotipo de la Aplicación.
+5. Entrega, pruebas y conformidad
+5.1. Antes de la entrega, las partes acuerdan el alcance de la Aplicación. Los cambios que se pidan antes de la entrega se hacen antes de la entrega.
+5.2. En la entrega, el LICENCIATARIO revisa la Aplicación y firma, o confirma por escrito (correo o mensaje), el Acta de conformidad, declarando que cumple lo acordado.
+5.3. La firma o confirmación del Acta fija la Fecha de entrega y da inicio al Período de garantía. Si el LICENCIATARIO recibió la Aplicación y la usó durante cinco (5) días corridos sin informar errores ni firmar el Acta, se entiende que la aceptó y la Fecha de entrega es el día de la entrega.
+5.4. Todo cambio, mejora o función nueva que se pida después de la Fecha de entrega es un trabajo nuevo, con presupuesto aparte.
+6. Garantía de 30 días
+6.1. Durante el Período de garantía, el LICENCIANTE corrige sin costo los errores de la Aplicación. Es un error una falla que impide que la Aplicación funcione de acuerdo con lo acordado y aceptado en el Acta.
+6.2. Quedan fuera de la garantía:
+• cambios, mejoras o funciones nuevas;
+• fallas causadas por mal uso, por modificaciones hechas por el LICENCIATARIO o por terceros, o por fallas del equipo, del sistema operativo o de otro software;
+• el uso en sistemas operativos que no cumplan los requisitos de la cláusula 9.4;
+• la pérdida de datos (cláusula 8);
+• la capacitación adicional a la del manual de uso.
+6.3. Los errores deben informarse por escrito al LICENCIANTE dentro del Período de garantía, describiendo el problema con el mayor detalle posible (qué se hizo, qué se esperaba y qué pasó, con capturas de pantalla si es posible).
+6.4. El LICENCIANTE responde dentro de un plazo razonable, en los días y horarios de atención que se informan en el manual de uso o en el Contrato de licencia.
+6.5. Vencido el Período de garantía, el LICENCIANTE no está obligado a hacer pruebas, correcciones ni mantenimiento. Si lo hace, es un servicio aparte, con presupuesto previo.
+6.6. La Aplicación puede no estar firmada digitalmente con un certificado de editor. En ese caso, Windows o un antivirus pueden mostrar una advertencia al instalarla. Eso no es un error de la Aplicación.
+7. Mantenimiento y soporte posterior
+7.1. El mantenimiento, el soporte y las actualizaciones posteriores al Período de garantía no están incluidos en el precio de la licencia.
+7.2. Si el LICENCIATARIO los quiere, pueden acordarse por separado, con el precio y las condiciones que las partes fijen por escrito.
+8. Datos, privacidad y copias de seguridad
+8.1. Los Datos son propiedad del LICENCIATARIO y se guardan únicamente en su computadora.
+8.2. El LICENCIANTE no recibe, no accede, no guarda ni trata los Datos. Para emitir la licencia solo conoce el nombre del LICENCIATARIO, su contacto y el ID de máquina.
+8.3. Por eso, el LICENCIATARIO es el único responsable del tratamiento de los datos personales que cargue de sus clientes, dueños de mascotas y proveedores. Le corresponde cumplir la Ley 25.326 de Protección de los Datos Personales y sus normas complementarias, o la norma que la reemplace: informar la finalidad del tratamiento, atender los pedidos de acceso, rectificación y supresión, adoptar medidas de seguridad sobre su computadora y sus copias (por ejemplo, contraseña de Windows, antivirus y resguardo físico) y, si la normativa lo exige, registrar su base de datos ante la autoridad de aplicación.
+8.4. Si, para resolver un problema, el LICENCIATARIO autoriza expresamente al LICENCIANTE a acceder de forma remota a su computadora o le entrega una copia de sus Datos, el LICENCIANTE los usa solo para esa tarea, los mantiene confidenciales y los elimina al terminar.
+8.5. La Aplicación no hace copias de seguridad automáticas. Incluye funciones para exportar una copia (base de datos, imágenes y archivo de licencia) y para restaurarla, que se explican en el manual de uso. La Aplicación verifica la integridad de cada copia al exportarla y antes de restaurarla. Restaurar una copia reemplaza los Datos actuales; antes, la Aplicación guarda los Datos actuales en una carpeta de respaldo previo, que se reemplaza en la siguiente restauración.
+8.6. Hacer copias periódicas y guardarlas fuera de la computadora donde funciona la Aplicación (por ejemplo, en un pendrive, un disco externo o un servicio en la nube) es responsabilidad exclusiva del LICENCIATARIO. Las copias y los archivos exportados a PDF o Excel contienen datos personales: su resguardo también es responsabilidad del LICENCIATARIO.
+8.7. Desinstalar la Aplicación no borra los Datos. Para eliminarlos definitivamente, el LICENCIATARIO debe borrar la carpeta de datos que la Aplicación indica en Configuración.
+8.8. El LICENCIANTE no responde por la pérdida, borrado o deterioro de Datos, cualquiera sea su causa (fallas del equipo, errores humanos, virus, eliminación de registros desde la propia Aplicación o falta de copias de seguridad), salvo dolo o culpa grave del LICENCIANTE.
+8.9. El contenido, la conservación y la validez de las historias clínicas veterinarias, y el cumplimiento de la normativa profesional de cada jurisdicción, son responsabilidad del LICENCIATARIO. La Aplicación es una herramienta de registro y no garantiza por sí sola el cumplimiento de requisitos formales.
+8.10. El LICENCIATARIO debe mantener la computadora donde funciona la Aplicación en condiciones razonables de seguridad: usar una versión de Windows que reciba actualizaciones de seguridad e instalarlas, mantener activo un antivirus, proteger el acceso con contraseña, no instalar en ese equipo programas de origen dudoso y limitar la cantidad de usuarios con permisos de administrador.
+8.11. La Aplicación funciona sin conexión a internet y no realiza conexiones de red. Sin embargo, no puede proteger a una computadora que ya está infectada, ni reemplaza al antivirus, al cortafuegos ni a las copias de seguridad. El LICENCIANTE no responde por daños causados por virus, gusanos, ransomware, accesos no autorizados u otro software malicioso presente en el equipo del LICENCIATARIO, salvo dolo o culpa grave del LICENCIANTE.
+8.12. Para que una copia de seguridad no resulte afectada por un virus que dañe la computadora, conviene guardar copias en más de un lugar, desconectar el pendrive o disco externo después de copiar y probar periódicamente que una copia se puede restaurar.
+8.13. El LICENCIATARIO debe instalar únicamente el instalador y el Archivo de licencia que reciba directamente del LICENCIANTE, y desconfiar de copias obtenidas de otras fuentes. Si el LICENCIANTE informa un código de verificación (SHA-256) del instalador, el LICENCIATARIO puede comprobarlo antes de instalar.
+9. Alcance y uso responsable
+9.1. La Aplicación es una herramienta de gestión interna. No emite comprobantes fiscales ni factura electrónica. Las funciones de ventas, clientes y cuentas corrientes son registros internos y no reemplazan la facturación, la contabilidad ni el asesoramiento de un contador.
+9.2. La Aplicación no brinda asesoramiento veterinario ni calcula dosis. Los diagnósticos, tratamientos e indicaciones son texto cargado por el profesional, y las decisiones clínicas son de su exclusiva responsabilidad.
+9.3. El stock se calcula a partir de los movimientos que el LICENCIATARIO carga. Su exactitud depende de esa carga, por lo que conviene verificarlo periódicamente con un conteo físico.
+9.4. Requisitos mínimos: computadora con Windows 11 de 64 bits (o Windows 10 de 64 bits con actualizaciones de seguridad vigentes) y espacio libre suficiente para la base de datos y las imágenes.
+10. Cambio de computadora, reinstalación y reactivación
+10.1. Si el LICENCIATARIO cambia de computadora, o si el ID de máquina cambia (por ejemplo, por una reinstalación de Windows o por cambios de hardware), debe pedir una reactivación al LICENCIANTE, que emite un nuevo Archivo de licencia para el nuevo ID.
+10.2. Para pasar los Datos a la computadora nueva, el LICENCIATARIO exporta una copia de seguridad en la computadora anterior y la restaura en la nueva, según el manual de uso.
+10.3. La reactivación es gratuita cuando:
+a) la computadora original dejó de funcionar por una falla de hardware, o fue robada o destruida, y el LICENCIATARIO lo informa y, si el LICENCIANTE lo pide, lo acredita (por ejemplo, con una constancia técnica o una denuncia); o
+b) se debe a una reinstalación del sistema operativo, hasta [una (1)] vez por año.
+10.4. En los demás casos, en especial cuando el cambio se deba a negligencia o error del LICENCIATARIO (por ejemplo, borrado de la Aplicación o de la licencia, o reemplazo voluntario del equipo), la reactivación tiene el costo reducido que figura en el Contrato de licencia, inferior al precio original de la licencia.
+10.5. La licencia es válida para una sola computadora a la vez. Al activar la nueva, el LICENCIATARIO deja de usar la Aplicación en la anterior.
+11. Precio y pago
+11.1. El precio, la forma de pago y los servicios contratados figuran en el Contrato de licencia. El precio es un pago único e incluye la Aplicación en la versión entregada, el Archivo de licencia para una computadora, el manual de uso y el Período de garantía.
+11.2. El precio no incluye: copias de seguridad, mantenimiento y soporte posteriores a la garantía, capacitación adicional, cambios o funciones nuevas, ni las reactivaciones que no sean gratuitas según la cláusula 10.
+11.3. La mora en el pago autoriza al LICENCIANTE a no emitir el Archivo de licencia o a suspender los servicios hasta que se regularice.
+12. Limitación de responsabilidad
+12.1. La Aplicación se entrega para el uso acordado y en las condiciones del Acta de conformidad.
+12.2. La responsabilidad total del LICENCIANTE frente al LICENCIATARIO, por cualquier causa vinculada con estos términos, no supera el precio efectivamente pagado por la licencia.
+12.3. El LICENCIANTE no responde por daños indirectos, lucro cesante ni pérdidas derivadas de la interrupción de la actividad del LICENCIATARIO.
+12.4. Las limitaciones de esta cláusula y de la cláusula 8.8 no se aplican en caso de dolo o culpa grave del LICENCIANTE, ni en los casos en que la ley no permita limitar la responsabilidad.
+13. Vigencia y terminación
+13.1. La licencia rige por tiempo indeterminado, mientras el LICENCIATARIO cumpla estos términos.
+13.2. Si el LICENCIATARIO incumple la cláusula 4 o intenta evadir el sistema de licencia, el LICENCIANTE puede revocar la licencia. Salvo que el incumplimiento no pueda repararse, antes de revocarla lo intima por escrito a corregirlo en un plazo de cinco (5) días.
+13.3. Revocada la licencia, el LICENCIATARIO deja de usar la Aplicación. Los Datos siguen siendo suyos y conserva sus copias de seguridad.
+13.4. Subsisten luego de la terminación las cláusulas de propiedad intelectual, datos, limitación de responsabilidad y jurisdicción.
+14. Disposiciones generales
+14.1. Las comunicaciones entre las partes se hacen por escrito, al correo electrónico y al domicilio que cada una informa. Se consideran notificadas al enviarse al correo informado, salvo prueba en contrario.
+14.2. El LICENCIATARIO no puede ceder este contrato ni la licencia sin autorización escrita del LICENCIANTE.
+14.3. Si alguna cláusula resulta inválida, las demás siguen vigentes.
+14.4. Ninguna de las partes responde por demoras o incumplimientos causados por caso fortuito o fuerza mayor.
+14.5. Si hay diferencias entre estos términos y las condiciones particulares del Contrato de licencia, prevalecen las condiciones particulares.
+15. Ley aplicable y jurisdicción
+15.1. Estos términos se rigen por las leyes de la República Argentina.
+15.2. Para cualquier controversia, las partes se someten a los tribunales ordinarios de ciudad y provincia de la jurisdicción, renunciando a cualquier otro fuero, en la medida en que la ley lo permita.
+16. Aceptación
+16.1. El LICENCIATARIO declara haber leído y aceptado estos términos al instalar la Aplicación, al cargar el Archivo de licencia o al firmar el Contrato de licencia.

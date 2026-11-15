@@ -4,14 +4,13 @@ import { join } from 'path'
 
 let db: DatabaseSync
 
-export type Origen = 'compra' | 'consulta' | 'ajuste'
+export type Origen = 'compra' | 'consulta' | 'ajuste' | 'venta'
 export interface Uso {
   productoId: number
   cantidad: number
 }
 
 export const getDb = (): DatabaseSync => db
-
 export const rutaDb = (): string => join(app.getPath('userData'), 'vetgest.db')
 
 export function cerrarDb(): void {
@@ -111,6 +110,118 @@ export function registrarMovimiento(m: {
   )
 }
 
+const ddlMovimiento = (nombre: string, siNoExiste: boolean): string => `
+  CREATE TABLE ${siNoExiste ? 'IF NOT EXISTS ' : ''}${nombre} (
+    id INTEGER PRIMARY KEY,
+    producto_id INTEGER NOT NULL REFERENCES producto(id),
+    tipo TEXT NOT NULL CHECK (tipo IN ('entrada', 'salida')),
+    cantidad INTEGER NOT NULL CHECK (cantidad > 0),
+    origen TEXT NOT NULL CHECK (origen IN ('compra', 'consulta', 'ajuste', 'venta')),
+    referencia_id INTEGER,
+    fecha TEXT NOT NULL,
+    nota TEXT,
+    anula_a INTEGER,
+    proveedor_id INTEGER,
+    costo_unitario INTEGER
+  )`
+
+// SQLite no permite cambiar un CHECK: si la tabla es de una versión vieja, se reconstruye conservando todo
+function permitirVentas(): void {
+  const r = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'movimiento_stock'")
+    .get() as unknown as { sql: string } | undefined
+  if (!r || r.sql.includes("'venta'")) return
+  db.exec('PRAGMA foreign_keys = OFF')
+  try {
+    transaccion(() => {
+      db.exec(ddlMovimiento('movimiento_stock_nueva', false))
+      db.exec(`
+        INSERT INTO movimiento_stock_nueva
+          (id, producto_id, tipo, cantidad, origen, referencia_id, fecha, nota, anula_a, proveedor_id, costo_unitario)
+        SELECT id, producto_id, tipo, cantidad, origen, referencia_id, fecha, nota, anula_a, proveedor_id, costo_unitario
+        FROM movimiento_stock`)
+      db.exec('DROP TABLE movimiento_stock')
+      db.exec('ALTER TABLE movimiento_stock_nueva RENAME TO movimiento_stock')
+    })
+  } finally {
+    db.exec('PRAGMA foreign_keys = ON')
+  }
+}
+const ddlVenta = (nombre: string, siNoExiste: boolean): string => `
+  CREATE TABLE ${siNoExiste ? 'IF NOT EXISTS ' : ''}${nombre} (
+    id INTEGER PRIMARY KEY,
+    fecha TEXT NOT NULL,
+    cuenta_id INTEGER REFERENCES cuenta_cliente(id),
+    cliente_nombre TEXT,
+    pago TEXT NOT NULL CHECK (pago IN ('efectivo', 'transferencia', 'tarjeta', 'cuenta_corriente')),
+    total INTEGER NOT NULL,
+    nota TEXT,
+    anulada INTEGER NOT NULL DEFAULT 0
+  )`
+
+const ddlCobro = (nombre: string, siNoExiste: boolean): string => `
+  CREATE TABLE ${siNoExiste ? 'IF NOT EXISTS ' : ''}${nombre} (
+    id INTEGER PRIMARY KEY,
+    cuenta_id INTEGER NOT NULL REFERENCES cuenta_cliente(id),
+    fecha TEXT NOT NULL,
+    monto INTEGER NOT NULL CHECK (monto > 0),
+    medio TEXT NOT NULL,
+    nota TEXT,
+    anulado INTEGER NOT NULL DEFAULT 0
+  )`
+
+// Las cuentas corrientes pasan a ser una lista propia (cuenta_cliente), separada de los dueños de las mascotas.
+// Si la base es de la versión anterior, se reconstruyen venta y cobro conservando todos los datos.
+function migrarCuentas(): void {
+  const cols = db.prepare('PRAGMA table_info(venta)').all() as unknown as { name: string }[]
+  if (!cols.some((c) => c.name === 'cliente_id')) return
+  db.exec('PRAGMA foreign_keys = OFF')
+  try {
+    transaccion(() => {
+      db.exec('CREATE TEMP TABLE mapa_cuenta (propietario_id INTEGER PRIMARY KEY, cuenta_id INTEGER)')
+      const duenos = db
+        .prepare(
+          `SELECT o.id, o.nombre, o.telefono, o.direccion FROM propietario o
+           WHERE o.id IN (SELECT cliente_id FROM venta WHERE cliente_id IS NOT NULL AND pago = 'cuenta_corriente')
+              OR o.id IN (SELECT cliente_id FROM cobro)`
+        )
+        .all() as unknown as { id: number; nombre: string; telefono: string | null; direccion: string | null }[]
+      const insCuenta = db.prepare(
+        'INSERT INTO cuenta_cliente (nombre, telefono, direccion, creado) VALUES (?, ?, ?, ?)'
+      )
+      const insMapa = db.prepare('INSERT INTO mapa_cuenta (propietario_id, cuenta_id) VALUES (?, ?)')
+      for (const d of duenos) {
+        const r = insCuenta.run(d.nombre, d.telefono, d.direccion, new Date().toISOString())
+        insMapa.run(d.id, Number(r.lastInsertRowid))
+      }
+
+      db.exec(ddlVenta('venta_nueva', false))
+      db.exec(`
+        INSERT INTO venta_nueva (id, fecha, cuenta_id, cliente_nombre, pago, total, nota, anulada)
+        SELECT v.id, v.fecha,
+               CASE WHEN v.pago = 'cuenta_corriente'
+                    THEN (SELECT m.cuenta_id FROM mapa_cuenta m WHERE m.propietario_id = v.cliente_id) END,
+               CASE WHEN v.pago <> 'cuenta_corriente'
+                    THEN (SELECT o.nombre FROM propietario o WHERE o.id = v.cliente_id) END,
+               v.pago, v.total, v.nota, v.anulada
+        FROM venta v`)
+      db.exec(ddlCobro('cobro_nueva', false))
+      db.exec(`
+        INSERT INTO cobro_nueva (id, cuenta_id, fecha, monto, medio, nota, anulado)
+        SELECT k.id, (SELECT m.cuenta_id FROM mapa_cuenta m WHERE m.propietario_id = k.cliente_id),
+               k.fecha, k.monto, k.medio, k.nota, k.anulado
+        FROM cobro k`)
+      db.exec('DROP TABLE venta')
+      db.exec('ALTER TABLE venta_nueva RENAME TO venta')
+      db.exec('DROP TABLE cobro')
+      db.exec('ALTER TABLE cobro_nueva RENAME TO cobro')
+      db.exec('DROP TABLE mapa_cuenta')
+    })
+  } finally {
+    db.exec('PRAGMA foreign_keys = ON')
+  }
+}
+
 export function initDb(): void {
   db = new DatabaseSync(rutaDb())
   db.exec('PRAGMA journal_mode = WAL')
@@ -154,16 +265,6 @@ export function initDb(): void {
       stock_minimo INTEGER NOT NULL DEFAULT 0,
       proveedor_id INTEGER REFERENCES proveedor(id)
     );
-    CREATE TABLE IF NOT EXISTS movimiento_stock (
-      id INTEGER PRIMARY KEY,
-      producto_id INTEGER NOT NULL REFERENCES producto(id),
-      tipo TEXT NOT NULL CHECK (tipo IN ('entrada', 'salida')),
-      cantidad INTEGER NOT NULL CHECK (cantidad > 0),
-      origen TEXT NOT NULL CHECK (origen IN ('compra', 'consulta', 'ajuste')),
-      referencia_id INTEGER,
-      fecha TEXT NOT NULL,
-      nota TEXT
-    );
     CREATE TABLE IF NOT EXISTS consulta_producto (
       consulta_id INTEGER NOT NULL REFERENCES consulta(id),
       producto_id INTEGER NOT NULL REFERENCES producto(id),
@@ -178,13 +279,33 @@ export function initDb(): void {
       archivo TEXT NOT NULL,
       fecha TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS cuenta_cliente (
+      id INTEGER PRIMARY KEY,
+      nombre TEXT NOT NULL,
+      telefono TEXT,
+      direccion TEXT,
+      nota TEXT,
+      creado TEXT
+    );
+    CREATE TABLE IF NOT EXISTS venta_item (
+      id INTEGER PRIMARY KEY,
+      venta_id INTEGER NOT NULL REFERENCES venta(id),
+      producto_id INTEGER REFERENCES producto(id),
+      descripcion TEXT NOT NULL,
+      cantidad INTEGER NOT NULL CHECK (cantidad > 0),
+      precio_unitario INTEGER NOT NULL
+    );
   `)
+  db.exec(ddlMovimiento('movimiento_stock', true))
+  db.exec(ddlVenta('venta', true))
+  db.exec(ddlCobro('cobro', true))
 
   // Migraciones: agregan columnas nuevas a bases ya existentes sin perder datos
   agregarColumna('movimiento_stock', 'anula_a', 'INTEGER')
   agregarColumna('movimiento_stock', 'proveedor_id', 'INTEGER')
   agregarColumna('movimiento_stock', 'costo_unitario', 'INTEGER')
   agregarColumna('producto', 'activo', 'INTEGER NOT NULL DEFAULT 1')
+  agregarColumna('producto', 'eliminado', 'INTEGER NOT NULL DEFAULT 0')
   agregarColumna('proveedor', 'activo', 'INTEGER NOT NULL DEFAULT 1')
   agregarColumna('proveedor', 'contacto', 'TEXT')
   agregarColumna('proveedor', 'direccion', 'TEXT')
@@ -192,6 +313,12 @@ export function initDb(): void {
   agregarColumna('consulta', 'modificada', 'TEXT')
   agregarColumna('consulta', 'peso_kg', 'REAL')
   agregarColumna('consulta', 'temperatura', 'REAL')
+  agregarColumna('propietario', 'direccion', 'TEXT')
+  agregarColumna('paciente', 'sexo', 'TEXT')
+  agregarColumna('paciente', 'nacimiento', 'TEXT')
+  agregarColumna('paciente', 'alimentacion', 'TEXT')
+  permitirVentas()
+  migrarCuentas()
 }
 
 export function registerIpc(): void {
@@ -279,6 +406,32 @@ export function registerIpc(): void {
     db.prepare('UPDATE proveedor SET activo = ? WHERE id = ?').run(d.activo ? 1 : 0, d.id)
   })
 
+  ipcMain.handle('proveedores:eliminar', (_e, id: number) => {
+    transaccion(() => {
+      const pv = db
+        .prepare('SELECT nombre FROM proveedor WHERE id = ?')
+        .get(id) as unknown as { nombre: string } | undefined
+      if (!pv) throw new Error('Proveedor no encontrado')
+
+      const compras = db
+        .prepare(
+          `SELECT COUNT(*) AS n FROM movimiento_stock m
+           WHERE m.proveedor_id = ? AND m.origen = 'compra' AND m.tipo = 'entrada'
+             AND NOT EXISTS (SELECT 1 FROM movimiento_stock x WHERE x.anula_a = m.id)`
+        )
+        .get(id) as unknown as { n: number }
+      if (compras.n > 0) {
+        throw new Error(
+          `${pv.nombre} tiene ${compras.n} ${compras.n === 1 ? 'compra registrada' : 'compras registradas'}. Anulalas desde Stock (historial del producto) y después podés eliminarlo. Si solo querés dejar de usarlo, archivalo para conservar el historial.`
+        )
+      }
+
+      db.prepare('UPDATE producto SET proveedor_id = NULL WHERE proveedor_id = ?').run(id)
+      db.prepare('UPDATE movimiento_stock SET proveedor_id = NULL WHERE proveedor_id = ?').run(id)
+      db.prepare('DELETE FROM proveedor WHERE id = ?').run(id)
+    })
+  })
+
   // ---------- Productos ----------
   ipcMain.handle('productos:listar', (_e, incluirArchivados?: boolean) =>
     db
@@ -289,7 +442,7 @@ export function registerIpc(): void {
          FROM producto pr
          LEFT JOIN movimiento_stock m ON m.producto_id = pr.id
          LEFT JOIN proveedor pv ON pv.id = pr.proveedor_id
-         WHERE (? = 1 OR pr.activo = 1)
+         WHERE pr.eliminado = 0 AND (? = 1 OR pr.activo = 1)
          GROUP BY pr.id ORDER BY pr.activo DESC, pr.nombre`
       )
       .all(incluirArchivados ? 1 : 0)
@@ -356,6 +509,27 @@ export function registerIpc(): void {
     db.prepare('UPDATE producto SET activo = ? WHERE id = ?').run(d.activo ? 1 : 0, d.id)
   })
 
+  // Eliminar = sacar el producto del stock. Sus registros (movimientos, compras, consultas, ventas) se conservan.
+  ipcMain.handle('productos:eliminar', (_e, id: number) => {
+    transaccion(() => {
+      const p = db
+        .prepare('SELECT nombre FROM producto WHERE id = ? AND eliminado = 0')
+        .get(id) as unknown as { nombre: string } | undefined
+      if (!p) throw new Error('Producto no encontrado')
+      const restante = stockDe(id)
+      if (restante > 0) {
+        registrarMovimiento({
+          productoId: id,
+          tipo: 'salida',
+          cantidad: restante,
+          origen: 'ajuste',
+          nota: `Producto eliminado del stock (quedaban ${restante})`
+        })
+      }
+      db.prepare('UPDATE producto SET eliminado = 1, activo = 0 WHERE id = ?').run(id)
+    })
+  })
+
   // ---------- Movimientos de stock ----------
   ipcMain.handle('stock:movimiento', (_e, d) => {
     if (d.origen !== 'compra' && d.origen !== 'ajuste') throw new Error('Origen no permitido')
@@ -413,6 +587,9 @@ export function registerIpc(): void {
       if (m.origen === 'consulta') {
         throw new Error('Los movimientos de una consulta se corrigen editando la consulta')
       }
+      if (m.origen === 'venta') {
+        throw new Error('Los movimientos de una venta se corrigen anulando la venta desde Ventas')
+      }
       if (m.anula_a) {
         throw new Error('Una anulación no se puede anular. Registrá un ingreso o una baja nueva')
       }
@@ -442,68 +619,23 @@ export function registerIpc(): void {
       .all(productoId)
   )
 
-    // ---------- Eliminar producto / proveedor ----------
-  ipcMain.handle('productos:eliminar', (_e, id: number) => {
-    transaccion(() => {
-      const p = db
-        .prepare('SELECT nombre FROM producto WHERE id = ?')
-        .get(id) as unknown as { nombre: string } | undefined
-      if (!p) throw new Error('Producto no encontrado')
-
-      const enUso = db
-        .prepare(
-          `SELECT COALESCE(SUM(CASE tipo WHEN 'salida' THEN cantidad ELSE -cantidad END), 0) AS n
-           FROM movimiento_stock WHERE producto_id = ? AND origen = 'consulta'`
-        )
-        .get(id) as unknown as { n: number }
-      if (enUso.n > 0) {
-        throw new Error(
-          `"${p.nombre}" se usa en consultas de la historia clínica. Quitalo de esas consultas (editándolas) o eliminalas, y después podés eliminar el producto. Si solo querés sacarlo de la lista, archivalo.`
-        )
-      }
-
-      const compras = db
-        .prepare(
-          `SELECT COUNT(*) AS n FROM movimiento_stock m
-           WHERE m.producto_id = ? AND m.origen = 'compra' AND m.tipo = 'entrada'
-             AND NOT EXISTS (SELECT 1 FROM movimiento_stock x WHERE x.anula_a = m.id)`
-        )
-        .get(id) as unknown as { n: number }
-      if (compras.n > 0) {
-        throw new Error(
-          `"${p.nombre}" tiene ${compras.n} ${compras.n === 1 ? 'compra registrada' : 'compras registradas'}. Anulalas desde su historial de movimientos (botón Anular) y después podés eliminarlo. Si solo querés sacarlo de la lista, archivalo.`
-        )
-      }
-
-      db.prepare('DELETE FROM consulta_producto WHERE producto_id = ?').run(id)
-      db.prepare('DELETE FROM movimiento_stock WHERE producto_id = ?').run(id)
-      db.prepare('DELETE FROM producto WHERE id = ?').run(id)
-    })
-  })
-
-  ipcMain.handle('proveedores:eliminar', (_e, id: number) => {
-    transaccion(() => {
-      const pv = db
-        .prepare('SELECT nombre FROM proveedor WHERE id = ?')
-        .get(id) as unknown as { nombre: string } | undefined
-      if (!pv) throw new Error('Proveedor no encontrado')
-
-      const compras = db
-        .prepare(
-          `SELECT COUNT(*) AS n FROM movimiento_stock m
-           WHERE m.proveedor_id = ? AND m.origen = 'compra' AND m.tipo = 'entrada'
-             AND NOT EXISTS (SELECT 1 FROM movimiento_stock x WHERE x.anula_a = m.id)`
-        )
-        .get(id) as unknown as { n: number }
-      if (compras.n > 0) {
-        throw new Error(
-          `${pv.nombre} tiene ${compras.n} ${compras.n === 1 ? 'compra registrada' : 'compras registradas'}. Anulalas desde Stock (historial del producto) y después podés eliminarlo. Si solo querés dejar de usarlo, archivalo para conservar el historial.`
-        )
-      }
-
-      db.prepare('UPDATE producto SET proveedor_id = NULL WHERE proveedor_id = ?').run(id)
-      db.prepare('UPDATE movimiento_stock SET proveedor_id = NULL WHERE proveedor_id = ?').run(id)
-      db.prepare('DELETE FROM proveedor WHERE id = ?').run(id)
-    })
+  // Libro de movimientos de stock (todos los productos, incluso los eliminados)
+  ipcMain.handle('stock:libro', (_e, f: { desde?: string; hasta?: string; tipo?: string; q?: string }) => {
+    const tipo = f?.tipo === 'entrada' || f?.tipo === 'salida' ? f.tipo : ''
+    const like = `%${f?.q ?? ''}%`
+    return db
+      .prepare(
+        `SELECT m.id, m.fecha, m.tipo, m.cantidad, m.origen, m.nota, m.anula_a, m.costo_unitario,
+                pr.id AS producto_id, pr.nombre AS producto, pr.unidad, pv.nombre AS proveedor,
+                EXISTS (SELECT 1 FROM movimiento_stock x WHERE x.anula_a = m.id) AS anulado
+         FROM movimiento_stock m
+         JOIN producto pr ON pr.id = m.producto_id
+         LEFT JOIN proveedor pv ON pv.id = m.proveedor_id
+         WHERE m.fecha >= ? AND m.fecha < ?
+           AND (? = '' OR m.tipo = ?)
+           AND (? = '%%' OR pr.nombre LIKE ?)
+         ORDER BY m.id DESC LIMIT 3000`
+      )
+      .all(f?.desde || '0', f?.hasta || '9', tipo, tipo, like, like)
   })
 }

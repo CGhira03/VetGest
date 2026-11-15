@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, nativeImage } from 'electron'
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync, openSync, readSync, closeSync } from 'fs'
 import { basename, extname, join } from 'path'
 import { agrupar, getDb, opcional, registrarMovimiento, texto, transaccion, type Uso } from './db'
 
@@ -31,6 +31,23 @@ function borrarArchivos(archivo: string): void {
   }
 }
 
+// Verifica los primeros bytes del archivo: una imagen JPG o PNG real, no un archivo renombrado
+function esImagenReal(ruta: string): boolean {
+  let fd = -1
+  try {
+    fd = openSync(ruta, 'r')
+    const b = Buffer.alloc(8)
+    readSync(fd, b, 0, 8, 0)
+    const png = b.equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    const jpg = b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff
+    return png || jpg
+  } catch {
+    return false
+  } finally {
+    if (fd >= 0) closeSync(fd)
+  }
+}
+
 function guardarImagen(
   ruta: string,
   pacienteId: number,
@@ -40,6 +57,7 @@ function guardarImagen(
   if (!permitidos.has(ruta)) throw new Error('Archivo no autorizado. Volvé a elegir la imagen')
   const ext = extname(ruta).toLowerCase()
   if (!EXT.includes(ext)) throw new Error('Formato no soportado: usá JPG o PNG')
+  if (!esImagenReal(ruta)) throw new Error(`${basename(ruta)} no es una imagen JPG o PNG válida`)
   if (statSync(ruta).size > MAX_BYTES) throw new Error(`${basename(ruta)} pesa más de 25 MB`)
   const img = nativeImage.createFromPath(ruta)
   if (img.isEmpty()) throw new Error(`No se pudo leer la imagen ${basename(ruta)}`)
@@ -111,14 +129,59 @@ function borrarConsulta(id: number): string[] {
   return adj.map((a) => a.archivo)
 }
 
+const dosDigitos = (n: number): string => String(n).padStart(2, '0')
+
+// La edad se guarda como fecha de nacimiento aproximada: así se mantiene actualizada con el tiempo
+function nacimientoDesdeEdad(anios: unknown, meses: unknown): string | null {
+  const a = String(anios ?? '').trim()
+  const m = String(meses ?? '').trim()
+  if (!a && !m) return null
+  const A = a ? Number(a) : 0
+  const M = m ? Number(m) : 0
+  if (!Number.isInteger(A) || !Number.isInteger(M) || A < 0 || M < 0) {
+    throw new Error('La edad debe ser un número entero de años y/o meses')
+  }
+  const total = A * 12 + M
+  if (total > 480) throw new Error('Revisá la edad: es demasiado alta')
+  const d = new Date()
+  const dia = d.getDate()
+  d.setDate(1)
+  d.setMonth(d.getMonth() - total)
+  d.setDate(Math.min(dia, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()))
+  return `${d.getFullYear()}-${dosDigitos(d.getMonth() + 1)}-${dosDigitos(d.getDate())}`
+}
+
+// Usa un dueño existente o crea uno nuevo
+function propietarioParaPaciente(d: {
+  propietarioId?: unknown
+  propietario?: unknown
+  telefono?: unknown
+  direccion?: unknown
+}): number {
+  const db = getDb()
+  if (d.propietarioId) {
+    if (!db.prepare('SELECT 1 AS x FROM propietario WHERE id = ?').get(Number(d.propietarioId))) {
+      throw new Error('El dueño elegido no existe')
+    }
+    return Number(d.propietarioId)
+  }
+  const r = db
+    .prepare('INSERT INTO propietario (nombre, telefono, direccion) VALUES (?, ?, ?)')
+    .run(texto(d.propietario, 'nombre del dueño'), opcional(d.telefono), opcional(d.direccion))
+  return Number(r.lastInsertRowid)
+}
+
 export function registerClinica(): void {
+  ipcMain.handle('propietarios:listar', () =>
+    getDb().prepare('SELECT id, nombre, telefono, direccion FROM propietario ORDER BY nombre').all()
+  )
   // ---------- Pacientes ----------
   ipcMain.handle('pacientes:listar', (_e, q: string) => {
     const like = `%${q}%`
     return getDb()
       .prepare(
-        `SELECT p.id, p.nombre, p.especie, p.raza,
-                o.nombre AS propietario, o.telefono,
+        `SELECT p.id, p.nombre, p.especie, p.raza, p.sexo, p.nacimiento, p.alimentacion,
+                o.id AS propietario_id, o.nombre AS propietario, o.telefono, o.direccion,
                 (SELECT MAX(c.fecha) FROM consulta c WHERE c.paciente_id = p.id) AS ultima_consulta
          FROM paciente p JOIN propietario o ON o.id = p.propietario_id
          WHERE p.nombre LIKE ? OR o.nombre LIKE ?
@@ -128,16 +191,24 @@ export function registerClinica(): void {
   })
 
   ipcMain.handle('pacientes:crear', (_e, d) => {
-    const propietario = texto(d.propietario, 'nombre del dueño')
     const nombre = texto(d.nombre, 'nombre de la mascota')
+    const nacimiento = nacimientoDesdeEdad(d.edadAnios, d.edadMeses)
     return transaccion(() => {
-      const db = getDb()
-      const o = db
-        .prepare('INSERT INTO propietario (nombre, telefono) VALUES (?, ?)')
-        .run(propietario, opcional(d.telefono))
-      const p = db
-        .prepare('INSERT INTO paciente (propietario_id, nombre, especie, raza) VALUES (?, ?, ?, ?)')
-        .run(o.lastInsertRowid, nombre, opcional(d.especie), opcional(d.raza))
+      const propietarioId = propietarioParaPaciente(d)
+      const p = getDb()
+        .prepare(
+          `INSERT INTO paciente (propietario_id, nombre, especie, raza, sexo, nacimiento, alimentacion)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(
+          propietarioId,
+          nombre,
+          opcional(d.especie),
+          opcional(d.raza),
+          opcional(d.sexo),
+          nacimiento,
+          opcional(d.alimentacion)
+        )
       return Number(p.lastInsertRowid)
     })
   })
@@ -148,18 +219,26 @@ export function registerClinica(): void {
     transaccion(() => {
       const db = getDb()
       const p = db
-        .prepare('SELECT propietario_id FROM paciente WHERE id = ?')
-        .get(d.id) as unknown as { propietario_id: number } | undefined
+        .prepare('SELECT propietario_id, nacimiento FROM paciente WHERE id = ?')
+        .get(d.id) as unknown as { propietario_id: number; nacimiento: string | null } | undefined
       if (!p) throw new Error('Paciente no encontrado')
-      db.prepare('UPDATE paciente SET nombre = ?, especie = ?, raza = ? WHERE id = ?').run(
+      const nacimiento = d.edadCambio ? nacimientoDesdeEdad(d.edadAnios, d.edadMeses) : p.nacimiento
+      db.prepare(
+        `UPDATE paciente SET nombre = ?, especie = ?, raza = ?, sexo = ?, nacimiento = ?, alimentacion = ?
+         WHERE id = ?`
+      ).run(
         nombre,
         opcional(d.especie),
         opcional(d.raza),
+        opcional(d.sexo),
+        nacimiento,
+        opcional(d.alimentacion),
         d.id
       )
-      db.prepare('UPDATE propietario SET nombre = ?, telefono = ? WHERE id = ?').run(
+      db.prepare('UPDATE propietario SET nombre = ?, telefono = ?, direccion = ? WHERE id = ?').run(
         propietario,
         opcional(d.telefono),
+        opcional(d.direccion),
         p.propietario_id
       )
     })
@@ -330,6 +409,7 @@ export function registerClinica(): void {
       : await dialog.showOpenDialog(opciones)
     if (r.canceled) return []
     return r.filePaths.map((ruta) => {
+      if (!esImagenReal(ruta)) throw new Error(`${basename(ruta)} no es una imagen JPG o PNG válida`)
       permitidos.add(ruta)
       const img = nativeImage.createFromPath(ruta)
       const vista = img.isEmpty()
@@ -423,3 +503,4 @@ export function registerClinica(): void {
     archivos.forEach(borrarArchivos)
   })
 }
+

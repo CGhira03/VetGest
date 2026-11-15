@@ -27,14 +27,15 @@ const exigir = (): boolean => app.isPackaged || process.env.VETGEST_FORZAR_LICEN
 
 const rutaLicencia = (): string => join(app.getPath('userData'), 'licencia.vetlic')
 
+const REG = join(process.env['SystemRoot'] ?? 'C:\\Windows', 'System32', 'reg.exe')
+
 let idCache: string | null = null
 
 function leerMachineGuid(): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
-      'reg',
-      ['query', 'HKLM\\SOFTWARE\\Microsoft\\Cryptography', '/v', 'MachineGuid'],
-      { windowsHide: true },
+      REG,
+      ['query', 'HKLM\\SOFTWARE\\Microsoft\\Cryptography', '/v', 'MachineGuid'],      { windowsHide: true },
       (err, stdout) => {
         if (err) return reject(err)
         const m = /MachineGuid\s+REG_SZ\s+([0-9a-fA-F-]{8,})/.exec(stdout)
@@ -116,6 +117,15 @@ export async function evaluar(): Promise<EstadoLicencia> {
 export function registerLicencia(alActivar: () => void): void {
   ipcMain.handle('licencia:estado', () => evaluar())
 
+    ipcMain.handle('terminos:aceptar', async () => {
+    mkdirSync(app.getPath('userData'), { recursive: true })
+    writeFileSync(
+      join(app.getPath('userData'), 'aceptacion.json'),
+      JSON.stringify({ version: '1.0', fecha: new Date().toISOString(), idMaquina: await idMaquina() }, null, 2),
+      'utf8'
+    )
+  })
+  
   ipcMain.handle('licencia:activar', async () => {
     const opciones: OpenDialogOptions = {
       title: 'Elegir archivo de licencia',

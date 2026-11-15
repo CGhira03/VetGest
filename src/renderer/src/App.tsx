@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react'
+import Inicio from './pages/Inicio'
 import Pacientes from './pages/Pacientes'
+import Ventas from './pages/Ventas'
+import Clientes from './pages/Clientes'
 import Stock from './pages/Stock'
 import Proveedores from './pages/Proveedores'
 import Configuracion from './pages/Configuracion'
 import Activacion from './pages/Activacion'
-import { diasDesde, msgError, type EstadoLicencia } from './utils'
+import { LOGO } from './identidad'
+import { diasDesde, msgError, PESTANAS, type EstadoLicencia, type Pestana } from './utils'
 
-const tabs = ['Pacientes', 'Stock', 'Proveedores', 'Configuración'] as const
 const DIAS_AVISO_COPIA = 7
 
 export default function App() {
   const [estado, setEstado] = useState<EstadoLicencia | null>(null)
   const [errorInicio, setErrorInicio] = useState('')
-  const [tab, setTab] = useState<(typeof tabs)[number]>('Pacientes')
+  const [tab, setTab] = useState<Pestana>('Inicio')
   const [ultimaCopia, setUltimaCopia] = useState<string | null | undefined>(undefined)
 
   const cargarEstado = () =>
@@ -48,33 +51,25 @@ export default function App() {
   if (!estado.activada) return <Activacion estado={estado} onActivada={cargarEstado} />
 
   const dias = ultimaCopia === undefined ? null : ultimaCopia === null ? Infinity : diasDesde(ultimaCopia)
-  const avisarCopia = dias !== null && dias >= DIAS_AVISO_COPIA && tab !== 'Configuración'
-
+  
   return (
     <div className="shell">
       <nav>
-        <span className="logo">VetGest</span>
-        {tabs.map((t) => (
+        <span className="logo-wrap">
+          <img src={LOGO} alt="VeteMascota" />
+        </span>
+        {PESTANAS.map((t) => (
           <button key={t} className={t === tab ? 'tab activo' : 'tab'} onClick={() => setTab(t)}>
             {t}
           </button>
         ))}
         <span className="lic-nombre">{estado.licenciatario}</span>
       </nav>
-      {avisarCopia && (
-        <div className="banner-copia">
-          <span>
-            {dias === Infinity
-              ? 'Todavía no exportaste ninguna copia de seguridad.'
-              : `Hace ${dias} días que no exportás una copia de seguridad.`}
-          </span>
-          <button className="chico" onClick={() => setTab('Configuración')}>
-            Hacer una copia
-          </button>
-        </div>
-      )}
       <div className="contenido">
+        {tab === 'Inicio' && <Inicio estado={estado} dias={dias} diasAviso={DIAS_AVISO_COPIA} onIr={setTab} />}
         {tab === 'Pacientes' && <Pacientes />}
+        {tab === 'Ventas' && <Ventas />}
+        {tab === 'Clientes' && <Clientes />}
         {tab === 'Stock' && <Stock />}
         {tab === 'Proveedores' && <Proveedores />}
         {tab === 'Configuración' && <Configuracion estado={estado} onCambio={cargarEstado} />}

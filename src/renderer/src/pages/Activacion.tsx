@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import TerminosModal from '../components/TerminosModal'
+import { LOGO } from '../identidad'
 import { msgError, type EstadoLicencia } from '../utils'
 
 export default function Activacion({
@@ -11,6 +13,8 @@ export default function Activacion({
   const [error, setError] = useState('')
   const [copiado, setCopiado] = useState(false)
   const [cargando, setCargando] = useState(false)
+  const [acepto, setAcepto] = useState(false)
+  const [verTerminos, setVerTerminos] = useState(false)
 
   async function copiar() {
     try {
@@ -26,7 +30,10 @@ export default function Activacion({
     setError('')
     try {
       const r = await window.api.activarLicencia()
-      if (r) onActivada()
+      if (r) {
+        await window.api.aceptarTerminos()
+        onActivada()
+      }
     } catch (err) {
       setError(msgError(err))
     }
@@ -36,7 +43,7 @@ export default function Activacion({
   return (
     <div className="activacion">
       <div className="activacion-caja">
-        <h1>VetGest</h1>
+        <img className="activacion-logo" src={LOGO} alt="VeteMascota" />
         <p className="detalle">Esta copia todavía no está activada.</p>
 
         {estado.modo === 'invalida' && estado.motivo && (
@@ -52,18 +59,33 @@ export default function Activacion({
             </button>
           </li>
           <li>Vas a recibir un archivo de licencia (extensión .vetlic).</li>
-          <li>Cargalo acá:</li>
+          <li>Aceptá los términos y cargalo acá:</li>
         </ol>
 
+        <label className="acepto">
+          <input type="checkbox" checked={acepto} onChange={(e) => setAcepto(e.target.checked)} />
+          <span>
+            Leí y acepto los{' '}
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                setVerTerminos(true)
+              }}
+            >
+              términos y condiciones
+            </a>
+            .
+          </span>
+        </label>
+
         {error && <div className="error">{error}</div>}
-        <button onClick={cargar} disabled={cargando}>
+        <button onClick={cargar} disabled={cargando || !acepto}>
           Cargar archivo de licencia
         </button>
-        <small className="ayuda">
-          La licencia es válida para esta computadora. Al activarla aceptás los términos del contrato de
-          licencia de uso.
-        </small>
+        <small className="ayuda">La licencia es válida para esta computadora.</small>
       </div>
+      {verTerminos && <TerminosModal onClose={() => setVerTerminos(false)} />}
     </div>
   )
 }
